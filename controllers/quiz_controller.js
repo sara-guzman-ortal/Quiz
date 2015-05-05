@@ -4,6 +4,7 @@ var models = require('../models/models.js');
 exports.question = function(req, res) {
   models.Quiz.findAll().then(function(quiz) {
     res.render('quizes/question', { pregunta: quiz[0].pregunta});
+  })  
 };
 
 // GET /quizes/answer
