@@ -11,7 +11,8 @@ router.get('/', function(req, res) {
 router.get('/author', function(req, res) {
   res.render('author', {
     author: 'Sara Guzmán Ortal',
-    photo: '<img src="/images/photo.jpg" width="100px" alt="Sara Guzman Ortal">'});
+    photo: '<img src="/images/photo.jpg" width="100px" alt="Sara Guzman Ortal">',
+    errors: [] });
 });
 
 // Autoload de comandos con :quizId
