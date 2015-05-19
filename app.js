@@ -42,6 +42,24 @@ app.use(function(req, res, next) {
   next();
 });
 
+// auto-logout de sesión
+app.use(function(req,res,next) {
+    console.log("MW auto-logout: 'Ejecutándose'");
+    if(req.session.user) {
+        var currentTime = new Date().getTime();
+        var diferencia  = currentTime - req.session.user.tiempo;
+        if(diferencia > 120000) {
+               console.log("MW auto-logout: 'Destruyendo al usuario'");
+               var sessionController = require('./controllers/session_controller').destroy(req,res);
+        }
+        else
+        {
+            req.session.user.tiempo = currentTime;
+        }
+    }
+    next();
+});
+
 app.use('/', routes);
 
 // catch 404 and forward to error handler
