@@ -26,21 +26,20 @@ exports.load = function(req, res, next, quizId) {
       if (quiz) {
         req.quiz = quiz;
         next();
-      } else{next(new Error('No existe quizId=' + quizId))}
+      } else{next(new Error('No existe quizId=' + quizId));}
     }
-  ).catch(function(error){next(error)});
+  ).catch(function(error){next(error);});
 };
 
 // GET /quizes
 // GET /users/:userId/quizes
 exports.index = function(req, res) {
+  var options = {};
+  if(req.user){
+    options.where = {UserId: req.user.id}
+  }
   var cadena = "";
     if (req.query.search === undefined) {
-      var options = {};
-      if(req.user){
-        options.where = {UserId: req.user.id}
-      }
-
       models.Quiz.findAll(options).then(
           function(quizes) {
             res.render('quizes/index', {
@@ -84,8 +83,7 @@ exports.answer = function(req, res) {
     { quiz: req.quiz,
       respuesta: resultado,
       errors: []
-    }
-  );
+    });
 };
 
 // GET /quizes/new
@@ -104,20 +102,18 @@ exports.create = function(req, res) {
     req.body.quiz.image = req.files.image.name;
   }
   var quiz = models.Quiz.build( req.body.quiz );
-
-  quiz
-    .validate()
-    .then(
-      function(err){
+  quiz.validate().then(function(err){
         if (err) {
           res.render('quizes/new', {quiz: quiz, errors: err.errors});
         } else {
-          quiz // save: guarda en DB campos pregunta y respuesta de quiz
-          .save({fields: ["pregunta", "respuesta", "UserId", "image"]})
-          .then( function(){ res.redirect('/quizes')})
-        }      // res.redirect: Redirección HTTP a lista de preguntas
-      }
-    ).catch(function(error){next(error)});
+          // save: guarda en DB campos pregunta y respuesta de quiz
+          quiz.save({fields: ["pregunta", "respuesta", "UserId", "image"]
+        }).then( function(){
+          // res.redirect: Redirección HTTP a lista de preguntas
+          res.redirect('/quizes');
+        });
+        }
+    }).catch(function(error){next(error);});
   };
 
 // GET /quizes/:id/edit
@@ -134,27 +130,22 @@ exports.update = function(req, res) {
   }
   req.quiz.pregunta  = req.body.quiz.pregunta;
   req.quiz.respuesta = req.body.quiz.respuesta;
-
-  req.quiz
-  .validate()
-  .then(
-    function(err){
+  req.quiz.validate().then(function(err){
       if (err) {
         res.render('quizes/edit', {quiz: req.quiz, errors: err.errors});
       } else {
-        req.quiz     // save: guarda campos pregunta y respuesta en DB
-        .save( {fields: ["pregunta", "respuesta", "image"]})
-        .then( function(){ res.redirect('/quizes');});
+        // save: guarda campos pregunta y respuesta en DB
+        req.quiz.save( {fields: ["pregunta", "respuesta", "image"]
+        }).then( function(){ res.redirect('/quizes');});
       }     // Redirección HTTP a lista de preguntas (URL relativo)
-    }
-  ).catch(function(error){next(error)});
+    }).catch(function(error){next(error);});
 };
 
 // DELETE /quizes/:id
 exports.destroy = function(req, res) {
   req.quiz.destroy().then( function() {
     res.redirect('/quizes');
-  }).catch(function(error){next(error)});
+  }).catch(function(error){next(error);});
 };
 
 //  console.log("req.quiz.id: " + req.quiz.id);
