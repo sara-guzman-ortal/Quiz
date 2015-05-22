@@ -23,9 +23,8 @@ exports.load = function(req, res, next, userId) {
       if (user) {
         req.user = user;
         next();
-      } else{next(new Error('No existe userId=' + userId))}
-    }
-  ).catch(function(error){next(error)});
+      } else{next(new Error('No existe userId=' + userId));}
+    }).catch(function(error){next(error);});
 };
 
 // Comprueba si el usuario esta registrado en users
@@ -41,8 +40,8 @@ exports.autenticar = function(login, password, callback) {
             	callback(null, user);
         	}
         	else { callback(new Error('Password erróneo.')); }
-      	} else { callback(new Error('No existe user=' + login))}
-    }).catch(function(error){callback(error)});
+      	} else { callback(new Error('No existe user=' + login));}
+    }).catch(function(error){callback(error);});
 };
 
 
@@ -54,8 +53,7 @@ exports.edit = function(req, res) {
 // GET /user
 exports.new = function(req, res) {
     var user = models.User.build( // crea objeto user
-        {username: "", password: ""}
-    );
+        {username: "", password: ""});
     res.render('user/new', {user: user, errors: []});
 };
 
@@ -63,23 +61,19 @@ exports.new = function(req, res) {
 exports.create = function(req, res) {
     var user = models.User.build( req.body.user );
 
-    user
-    .validate()
-    .then(
-        function(err){
+    user.validate().then(function(err){
             if (err) {
                 res.render('user/new', {user: user, errors: err.errors});
             } else {
-                user // save: guarda en DB campos username y password de user
-                .save({fields: ["username", "password"]})
-                .then( function(){
+              // save: guarda en DB campos username y password de user
+                user.save({fields: ["username", "password"]
+                }).then( function(){
                     // crea la sesión para que el usuario acceda ya autenticado y redirige a /
                     req.session.user = {id:user.id, username:user.username};
                     res.redirect('/');
                 });
             }
-        }
-    ).catch(function(error){next(error)});
+        }).catch(function(error){next(error);});
 };
 
 // PUT /user/:id
@@ -87,19 +81,15 @@ exports.update = function(req, res, next) {
   req.user.username  = req.body.user.username;
   req.user.password  = req.body.user.password;
 
-  req.user
-  .validate()
-  .then(
-    function(err){
+  req.user.validate().then(function(err){
       if (err) {
         res.render('user/' + req.user.id, {user: req.user, errors: err.errors});
       } else {
-        req.user     // save: guarda campo username y password en DB
-        .save( {fields: ["username", "password"]})
-        .then( function(){ res.redirect('/');});
+        // save: guarda campo username y password en DB
+        req.user.save( {fields: ["username", "password"]
+        }).then( function(){ res.redirect('/');});
       }     // Redirección HTTP a /
-    }
-  ).catch(function(error){next(error)});
+    }).catch(function(error){next(error);});
 };
 
 // DELETE /user/:id
@@ -108,5 +98,5 @@ exports.destroy = function(req, res) {
     // borra la sesión y redirige a /
     delete req.session.user;
     res.redirect('/');
-  }).catch(function(error){next(error)});
+  }).catch(function(error){next(error);});
 };
