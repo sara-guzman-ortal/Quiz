@@ -38,39 +38,135 @@ exports.index = function(req, res) {
   if(req.user){
     options.where = {UserId: req.user.id}
   }
-  var cadena = "";
-    if (req.query.search === undefined) {
-      models.Quiz.findAll(options).then(
-          function(quizes) {
-            res.render('quizes/index', {
-                quizes: quizes,
-                errors: []
-            });
-        }).catch(function(error) {next(error);
-        });
-    }
+  var search    = "";
+  var mark     = [];
+  var favourites = [];
+  if(req.session.user) {
+    models.Favourite.findAll( {
+            where: {
+                UserId: Number(req.session.user.id)
+            }
+        }).then(function(f) {
+            favourites = f;
+            if(req.query.search === undefined)
+            {
+                models.Quiz.findAll(options).then(function(quizes) {
+                    for(j in quizes)
+                    {
+                        mark[j] = 'unchecked';
+                        for(k in favourites)
+                        {
+                            if(favourites[k].QuizId === quizes[j].id)
+                            {
+                                mark[j] = 'checked';
+                            }
+                        }
+                    }
+                    res.render('quizes/index', {
+                        quizes: quizes,
+                        mark: mark,
+                        errors: []
+                    });
+                }).catch(function(error) {
+                    next(error);
+                });
+}
+            else
+            {
+                search = '%'+ req.query.search + '%';
+                search = search.replace(/ /g, '%');
+                models.Quiz.findAll( {
+                    where: ["pregunta like ?", search],
+                    order: ['pregunta']
+                }).then(function(quizes) {
+                    for(j in quizes)
+                    {
+                        mark[j] = 'unchecked';
+                        for(k in favourites)
+                        {
+                            if(favourites[k].QuizId === quizes[j].id)
+                            {
+                                mark[j] = 'checked';
+                            }
+                        }
+                    }
+                    res.render('quizes/index', {
+                        quizes: quizes,
+                        mark: mark,
+                        errors: []
+                    });
+                }).catch(function(error) {
+                    next(error);
+                });
+            }
+});
+}
+
     else
     {
-        cadena = '%' + req.query.search + '%';
-        cadena = cadena.replace(/\s/g, '%');
-        models.Quiz.findAll( {
-            where: ['pregunta like ?', cadena],
-            order: ['pregunta']
-        }).then(function(quizes) {
-            res.render('quizes/index', {
-                quizes: quizes,
-                errors: []
+      if(req.query.search === undefined)
+        {
+            models.Quiz.findAll(options).then(function(quizes) {
+                res.render('quizes/index', {
+                    quizes: quizes,
+                    mark: mark,
+                    errors: []
+                });
+            }).catch(function(error) {
+                next(error);
             });
-        }).catch(function(error) {
-            next(error);
-        });
+          }
+            else
+            {
+                search = '%' + req.query.search + '%';
+                search = search.replace(/ /g, '%');
+                models.Quiz.findAll( {
+                    where: ["pregunta like ?", search],
+                    order: ['pregunta']
+                }).then(function(quizes) {
+                    res.render('quizes/index', {
+                        quizes: quizes,
+                        mark: mark,
+                        errors: []
+                    });
+                }).catch(function(error) {
+                    next(error);
+                });
+             }
     }
 };
 
 // GET /quizes/:id
 exports.show = function(req, res) {
-  res.render('quizes/show', { quiz: req.quiz, errors: []});
-};              // req.quiz: instancia de quiz cargada con autoload
+  var mark = 'unchecked';
+    if(req.session.user)
+    {
+        models.Favourite.find( {
+            where: {
+                UserId: Number(req.session.user.id),
+                QuizId: Number(req.quiz.id)
+            }
+        }).then(function(favourite) {
+            if(favourite)
+            {
+                mark = 'checked';
+            }
+            res.render('quizes/show', {
+                quiz: req.quiz,
+                mark: mark,
+                errors: []
+            });
+        });
+    }
+    else
+    {
+        res.render('quizes/show', {
+            quiz: req.quiz,
+            mark: mark,
+            errors: []
+        });
+      }
+   };
 
 // GET /quizes/:id/answer
 exports.answer = function(req, res) {
